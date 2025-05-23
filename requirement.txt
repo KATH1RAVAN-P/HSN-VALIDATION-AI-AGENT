@@ -1,5 +1,3 @@
-```txt
 flask
 pandas
 openpyxl
-```
