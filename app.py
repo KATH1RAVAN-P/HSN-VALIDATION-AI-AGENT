@@ -4,7 +4,6 @@
 # In[ ]:
 
 
-pip install pandas flask openpyxl
 
 
 # In[1]:
@@ -66,7 +65,7 @@ def webhook():
 
 if __name__ == '__main__':
     # Run locally on a fixed port (no ngrok)
-    app.run(host='127.0.0.1', port=8000)
+    app.run(host='0.0.0.0', port=8000)
 
 
 # In[ ]:
