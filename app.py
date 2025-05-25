@@ -1,35 +1,14 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
-
-
-# In[1]:
-
-
 from flask import Flask, request, jsonify
 import pandas as pd
-import os
 
 app = Flask(__name__)
 
-
-# In[3]:
-
-
 # Load HSN Master Data
 df = pd.read_excel("HSN_SAC.xlsx")
-df = df.rename(columns = {"\nHSNCode":"HSNCode"})
+df = df.rename(columns={"\nHSNCode": "HSNCode"})
 df['HSNCode'] = df['HSNCode'].astype(str).str.strip()
 df['Description'] = df['Description'].astype(str).str.strip()
 
-
-# In[5]:
-
-
-# HSN Validation Function
 def validate_hsn_code(hsn_code):
     hsn_code = str(hsn_code).strip()
     if not hsn_code.isdigit():
@@ -42,46 +21,30 @@ def validate_hsn_code(hsn_code):
     else:
         return {"status": "Invalid", "reason": "Not found in master data"}
 
-
-# In[7]:
-
-
-# Webhook Endpoint
 @app.route('/webhook', methods=['POST'])
 def webhook():
     req = request.get_json()
-    hsn_code = req['queryResult']['parameters'].get('hsn_code')
-    result = validate_hsn_code(hsn_code)
+    hsn_param = req['queryResult']['parameters'].get('hsn_code')
 
-    reply = f"✅ HSN Code {hsn_code} is valid.\nDescription: {result['description']}" \
-        if result['status'] == 'Valid' \
-        else f"❌ Invalid HSN Code: {hsn_code}\nReason: {result['reason']}"
+    # Normalize to list if single string
+    if isinstance(hsn_param, str):
+        hsn_codes = [hsn_param]
+    elif isinstance(hsn_param, list):
+        hsn_codes = hsn_param
+    else:
+        hsn_codes = []
 
-    return jsonify({"fulfillmentText": reply})
+    replies = []
+    for code in hsn_codes:
+        result = validate_hsn_code(code)
+        if result['status'] == 'Valid':
+            reply = f" HSN Code {code} is valid.\nDescription: {result['description']}"
+        else:
+            reply = f" Invalid HSN Code: {code}\nReason: {result['reason']}"
+        replies.append(reply)
 
-
-# In[ ]:
-
+    final_reply = "\n\n".join(replies)
+    return jsonify({"fulfillmentText": final_reply})
 
 if __name__ == '__main__':
-    # Run locally on a fixed port (no ngrok)
-    app.run(host='0.0.0.0', port=8000)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
+    app.run(host='127.0.0.1', port=8000)
